@@ -608,11 +608,13 @@ func usage() {
 func main() {
 	flag.Usage = usage
 	pkgName := flag.String("p", "", "package name, if not speficied using the input file name instead")
+	outFile := flag.String("o", "", "output file, if not speficied using stdout instead")
 	flag.Parse()
 	if len(flag.Args()) < 1 {
 		fmt.Fprintf(os.Stderr, "no files to parse provided\n")
 		usage()
 	}
+	// parse files
 	src, err := ParseFiles(flag.Args())
 	if err != nil {
 		log.Fatal(err)
@@ -620,7 +622,17 @@ func main() {
 	if *pkgName != "" {
 		src.PkgName = *pkgName
 	}
-	if err := src.Generate(os.Stdout); err != nil {
+	// output file
+	var out io.Writer
+	if *outFile != "" {
+		out, err = os.OpenFile(*outFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		out = os.Stdout
+	}
+	if err := src.Generate(out); err != nil {
 		log.Fatal(err)
 	}
 }
